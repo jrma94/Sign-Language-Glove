@@ -18,17 +18,18 @@ char DATAZ1 = 0x37;	//Z-Axis Data 1
 //This buffer will hold values read from the ADXL345 registers.
 unsigned char values[10];
 //These variables will be used to hold the x,y and z axis accelerometer values.
-int x,y,z;
-int xg,yg,zg;
+int16_t x,y,z;
+int16_t xg,yg,zg;
 
 // the setup routine runs once when you press reset:
 const int buttonPin = PUSH2;     // the number of the pushbutton pin
 const int ledPin =  RED_LED;      // the number of the LED pin
-const int sampleSize = 10;    // read every 10th sample
+const int sampleSize = 10;    // read every 20th sample
 const int QUAN = 10;
 
 // variables will change:
 int buttonState = 1;         // variable for reading the pushbutton status
+bool buttonToggle = false;  // variable for saving the toggle state of the code (running when true)
 
 // Declare variables
 int sensor1 = 0,sensor2 = 0,sensor3 = 0;
@@ -77,11 +78,25 @@ void loop() {
 
   // check if the pushbutton is pressed.
   // if it is, the buttonState is HIGH:
-  if (buttonState == LOW) {     
+  // When button state is HIGH, change value of buttonToggle
+  if(buttonState == LOW){
+    if(buttonToggle){
+      buttonToggle = false;
+    }else{
+      buttonToggle = true;
+    }
+
+    //wait for button to be depressed to start main loop
+    while(buttonState == LOW){
+      buttonState = digitalRead(buttonPin);
+    }
+  }
+  
+  if(buttonToggle){    
     // turn LED on:    
     digitalWrite(ledPin, HIGH);
     // read samples
-    for(int j = 0; j < 20; j++) {
+    //for(int j = 0; j < 20; j++) {
       for(int i = 0; i<sampleSize; i++){  // read every 20th sample
         sensor1 = round(analogRead(23)/QUAN)*QUAN;
         sensor2 = round(analogRead(24)/QUAN)*QUAN;
@@ -97,12 +112,13 @@ void loop() {
      //The ADXL345 gives 10-bit acceleration values, but they are stored as bytes (8-bits). To get the full value, two bytes must be combined for each axis.
      //The X value is stored in values[0] and values[1].
      //***Since the current x value, as written below, outputs it in the negative direction when starting from a neutral position, flip it and see if this gives a positive result!!***
-     x = -1*(((int)values[1]<<8)|(int)values[0]);
+     x = -1*(((int16_t)values[1]<<8)|(int16_t)values[0]);
      //The Y value is stored in values[2] and values[3].
-     y = -1*(((int)values[3]<<8)|(int)values[2]);
+     y = -1*(((int16_t)values[3]<<8)|(int16_t)values[2]);
      //The Z value is stored in values[4] and values[5].
-     z = -1*(((int)values[5]<<8)|(int)values[4]);
+     z = -1*(((int16_t)values[5]<<8)|(int16_t)values[4]);
      
+     /*
      //Read contact states
      contact1 = digitalRead(cont1); // thumb contact connected to pin 40
      if(contact1 == HIGH){
@@ -124,7 +140,7 @@ void loop() {
      }
      else{
        index_cont2 = 0;
-     }
+     }*/
      
      //Print all the flex sensor values, accelerometer values, and contact state values.
      Serial.print(sensor1);
@@ -141,23 +157,25 @@ void loop() {
      Serial.print(',');
      Serial.print(y, DEC);
      Serial.print(',');
-     Serial.print(z, DEC);
-     Serial.print(',');
-     Serial.print(thumb_cont);
-     Serial.print(',');
-     Serial.print(index_cont1);
-     Serial.print(',');
-     Serial.println(index_cont2);
+     Serial.println(z, DEC);
+     //Serial.print(',');
+     //Serial.print(thumb_cont);
+     //Serial.print(',');
+     //Serial.print(index_cont1);
+     //Serial.print(',');
+     //Serial.println(index_cont2);
      
        // hold the quantized data
-       QDATA1[j] = sensor1;
-       QDATA2[j] = sensor2;
-       QDATA3[j] = sensor3;
-       QDATA4[j] = sensor4;
-       QDATA5[j] = sensor5;
-     }
+       //QDATA1[j] = sensor1;
+       //QDATA2[j] = sensor2;
+       //QDATA3[j] = sensor3;
+       //QDATA4[j] = sensor4;
+       //QDATA5[j] = sensor5;
+     //}
      
      
+    } else {
+      digitalWrite(ledPin, LOW);
     }
 }
 
